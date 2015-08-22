@@ -1,6 +1,7 @@
 var HashTable = function(){
   this._limit = 8;
   this._storage = LimitedArray(this._limit);
+  this.count = 0;
 };
 
 HashTable.prototype.insert = function(k, v){
@@ -16,6 +17,11 @@ HashTable.prototype.insert = function(k, v){
     }
   }
   bucket.push([k, v]);
+  this.count++;
+  if (this.count > 0.75 * this._limit) {
+    this._limit *= 2;
+    this.rehash(this._limit);
+  }
 };
 
 HashTable.prototype.retrieve = function(k){
@@ -34,12 +40,30 @@ HashTable.prototype.remove = function(k){
   for (var j = 0; j < bucket.length; j++) {
     if (bucket[j][0] === k) {
       bucket.splice(j, 1);
+      this.count--;
+      if (this._limit > 8 && this.count < 0.25 * this._limit) {
+        this._limit /= 2;
+        this.rehash(this._limit);
+      }
+      return;
       // Note: changed Mocha test to say that
       // the removed value should become undefined
       // rather than null, since we want to delete
       // the key-value pair from the hash table
       // not just replace the value with a null object
     }
+  }
+};
+
+HashTable.prototype.rehash = function(newLimit) {
+  var store = [];
+  this._storage.each(function(bucket) {
+    store = store.concat(bucket || []);
+  });
+  this._storage = LimitedArray(newLimit);
+  for (var i = 0; i < store.length; i++) {
+    this.count--;
+    this.insert.apply(this, store[i]);
   }
 };
 
@@ -58,4 +82,7 @@ HashTable.prototype.remove = function(k){
     remove: again, constant if storage resizes, and linear if it doesn't, because
       we must iterate through the bucket to find the item, and then iterate through
       the rest of the bucket to move the indices down one (with our splice operation)
+    rehash: Linear, because we must iterate over every item to extract all key-value
+      pairs, and then iterate over every key-value pair to insert it back into the
+      new storage array. This is why rehashing is an expensive operation.
  */
