@@ -47,4 +47,15 @@ HashTable.prototype.remove = function(k){
 
 /*
  * Complexity: What is the time complexity of the above functions?
+    insert: If our underlying storage array resizes in order to keep a consistent
+      average number of entries per bucket, then this operation is Constant time.
+      But if we don't resize, then the size of the buckets will increase linearly
+      with the number of entries in our hash table, so this method will be linear,
+      since we need to iterate over the bucket to see if k already exists.
+    retrieve: again, it is constant time if the storage array resizes to keep the
+      bucket sizes approximately constant, but it is linear if we don't resize,
+      because it must iterate over the bucket to find and return the value at k
+    remove: again, constant if storage resizes, and linear if it doesn't, because
+      we must iterate through the bucket to find the item, and then iterate through
+      the rest of the bucket to move the indices down one (with our splice operation)
  */
